@@ -22,7 +22,7 @@ app.get(process.env.general, async (req, res) => {
     const clientIp = requestIp.getClientIp(req)
     const code = req.query.code
     
-    res.redirect(Link);
+    res.redirect(process.env.Link);
     if (code == null) {
         return
     }
